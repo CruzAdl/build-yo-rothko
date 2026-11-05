@@ -101,7 +101,13 @@
           <!-- Colour -->
           <div class="staging-row">
             <span class="row-label">Colour</span>
-            <div class="item-group" id="pigment-strip"></div>
+            <div class="pigment-bar-container">
+              <button id="btn-open-picker" class="color-picker-trigger" type="button" title="Open Rothko Pigment Lab & Custom Color Picker">
+                <span class="picker-wheel-dot"></span>
+                <span>Mix</span>
+              </button>
+              <div class="item-group" id="pigment-strip"></div>
+            </div>
           </div>
 
           <!-- Texture -->
@@ -129,6 +135,80 @@
       </div>
 
     </footer>
+
+    <!-- Color Picker Laboratory Popover -->
+    <div id="color-picker-popover" class="picker-popover" style="display: none;">
+      <div class="picker-header">
+        <div class="picker-header-title">
+          <span class="picker-title-dot"></span>
+          <span>Pigment Laboratory</span>
+        </div>
+        <button id="btn-close-picker" class="picker-close-btn" type="button" title="Close">✕</button>
+      </div>
+
+      <div class="picker-body">
+        <!-- Live Halo & Body Vibration Preview -->
+        <div class="picker-preview-box">
+          <div class="preview-glow-stage">
+            <div class="preview-halo" id="picker-preview-halo"></div>
+            <div class="preview-core" id="picker-preview-core"></div>
+          </div>
+          <div class="preview-meta">
+            <span id="picker-preview-name" class="preview-name">Custom Mix</span>
+            <div class="preview-badges">
+              <span class="preview-sublabel">Core:</span>
+              <span id="picker-preview-hex" class="hex-badge">#8C161C</span>
+              <span class="preview-sublabel" style="margin-left: 6px;">Halo:</span>
+              <span id="picker-preview-halo-hex" class="hex-badge halo-badge">#B83B28</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Sliders: Hue, Chroma (Saturation), Depth (Lightness) -->
+        <div class="picker-controls">
+          <div class="picker-slider-row">
+            <label for="picker-hue">Hue</label>
+            <input type="range" id="picker-hue" min="0" max="360" value="357" class="hue-slider">
+          </div>
+          <div class="picker-slider-row">
+            <label for="picker-sat">Chroma</label>
+            <input type="range" id="picker-sat" min="5" max="100" value="84" class="sat-slider">
+          </div>
+          <div class="picker-slider-row">
+            <label for="picker-light">Depth</label>
+            <input type="range" id="picker-light" min="5" max="95" value="32" class="light-slider">
+          </div>
+        </div>
+
+        <!-- Hex Input + Eyedropper + Native Color Picker + Apply -->
+        <div class="picker-actions-row">
+          <div class="hex-input-wrap">
+            <span class="hex-prefix">#</span>
+            <input type="text" id="picker-hex-input" value="8C161C" maxlength="6" spellcheck="false" title="Hex color code">
+          </div>
+
+          <!-- Eyedropper API (Sample from canvas) -->
+          <button id="btn-eyedropper" class="picker-icon-btn" type="button" title="Sample color from screen (Eyedropper)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="m2 22 1-1h3l9-9"></path>
+              <path d="M14 4l6 6"></path>
+              <path d="m18 2 4 4-2 2-4-4z"></path>
+            </svg>
+          </button>
+
+          <!-- Native OS System Color Picker wrapper -->
+          <label class="picker-native-label" title="Open OS System Color Picker">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M12 2a7 7 0 0 0 7 7c0 2-2 3-2 3s-1 1-1 3"></path>
+            </svg>
+            <input type="color" id="native-color-input" value="#8c161c">
+          </label>
+
+          <button id="btn-apply-color" class="btn-picker-apply" type="button">Apply Tint</button>
+        </div>
+      </div>
+    </div>
 
   </aside>
 

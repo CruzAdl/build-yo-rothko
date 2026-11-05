@@ -9,7 +9,8 @@ import {
   SHAPES,
   TEXTURES,
   EDGES,
-  WALL_ARCHITECTURES
+  WALL_ARCHITECTURES,
+  computeRothkoHalo
 } from './palette.js';
 
 import { RothkoRenderer } from './renderer.js';
@@ -42,6 +43,11 @@ class BYORApp {
       edge: EDGES[0],
       bleedPercent: 50
     };
+
+    this.customPigments = [];
+    this.pickerH = 357;
+    this.pickerS = 84;
+    this.pickerL = 32;
 
     this.renderer = null;
     this.manipulator = null;
@@ -118,6 +124,20 @@ class BYORApp {
     this.dom.stagingDragGrip = document.getElementById('staging-drag-grip');
     this.dom.shapeStrip = document.getElementById('shape-strip');
     this.dom.pigmentStrip = document.getElementById('pigment-strip');
+    this.dom.btnOpenPicker = document.getElementById('btn-open-picker');
+    this.dom.colorPickerPopover = document.getElementById('color-picker-popover');
+    this.dom.btnClosePicker = document.getElementById('btn-close-picker');
+    this.dom.pickerPreviewCore = document.getElementById('picker-preview-core');
+    this.dom.pickerPreviewHalo = document.getElementById('picker-preview-halo');
+    this.dom.pickerPreviewHex = document.getElementById('picker-preview-hex');
+    this.dom.pickerPreviewHaloHex = document.getElementById('picker-preview-halo-hex');
+    this.dom.pickerHue = document.getElementById('picker-hue');
+    this.dom.pickerSat = document.getElementById('picker-sat');
+    this.dom.pickerLight = document.getElementById('picker-light');
+    this.dom.pickerHexInput = document.getElementById('picker-hex-input');
+    this.dom.btnEyedropper = document.getElementById('btn-eyedropper');
+    this.dom.nativeColorInput = document.getElementById('native-color-input');
+    this.dom.btnApplyColor = document.getElementById('btn-apply-color');
     this.dom.textureStrip = document.getElementById('texture-strip');
     this.dom.edgeStrip = document.getElementById('edge-strip');
     this.dom.sliderBleed = document.getElementById('slider-bleed');
@@ -391,21 +411,9 @@ class BYORApp {
       });
     });
 
-    // 4. Pigment Swatches
-    this.dom.pigmentStrip.innerHTML = '';
-    PIGMENTS.forEach(pigment => {
-      const circle = document.createElement('div');
-      circle.className = `pigment-circle ${pigment.hex === this.stagingConfig.pigment.hex ? 'active' : ''}`;
-      circle.style.backgroundColor = pigment.hex;
-      circle.title = pigment.name;
-      circle.onclick = () => {
-        this.stagingConfig.pigment = pigment;
-        document.querySelectorAll('#pigment-strip .pigment-circle').forEach(c => c.classList.remove('active'));
-        circle.classList.add('active');
-        this.onStagingConfigChanged();
-      };
-      this.dom.pigmentStrip.appendChild(circle);
-    });
+    // 4. Pigment Swatches & Color Picker
+    this.renderPigmentSwatches();
+    this.initColorPicker();
 
     // 5. Textures
     this.buildButtonGroup(this.dom.textureStrip, TEXTURES, 'texture');
@@ -438,6 +446,238 @@ class BYORApp {
       };
       container.appendChild(btn);
     });
+  }
+
+  renderPigmentSwatches() {
+    this.dom.pigmentStrip.innerHTML = '';
+    const allPigments = [...this.customPigments, ...PIGMENTS];
+    allPigments.forEach(pigment => {
+      const circle = document.createElement('div');
+      const isSelected = pigment.hex.toLowerCase() === this.stagingConfig.pigment.hex.toLowerCase();
+      circle.className = `pigment-circle ${isSelected ? 'active' : ''} ${pigment.isCustom ? 'custom-swatch' : ''}`;
+      circle.style.backgroundColor = pigment.hex;
+      circle.title = pigment.isCustom ? `${pigment.name} (Custom Mix)` : pigment.name;
+      circle.onclick = () => {
+        this.stagingConfig.pigment = pigment;
+        document.querySelectorAll('#pigment-strip .pigment-circle').forEach(c => c.classList.remove('active'));
+        circle.classList.add('active');
+        this.onStagingConfigChanged();
+      };
+      this.dom.pigmentStrip.appendChild(circle);
+    });
+  }
+
+  initColorPicker() {
+    if (!this.dom.btnOpenPicker) return;
+
+    // Toggle popover
+    this.dom.btnOpenPicker.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggleColorPickerPopover();
+    });
+
+    this.dom.btnClosePicker.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggleColorPickerPopover(false);
+    });
+
+    // Close when clicking outside
+    window.addEventListener('pointerdown', (e) => {
+      if (
+        this.dom.colorPickerPopover.style.display !== 'none' &&
+        !this.dom.colorPickerPopover.contains(e.target) &&
+        !this.dom.btnOpenPicker.contains(e.target) &&
+        !e.target.closest('.picker-native-label')
+      ) {
+        this.toggleColorPickerPopover(false);
+      }
+    });
+
+    // Sliders
+    const onSliderInput = () => {
+      this.pickerH = parseInt(this.dom.pickerHue.value, 10);
+      this.pickerS = parseInt(this.dom.pickerSat.value, 10);
+      this.pickerL = parseInt(this.dom.pickerLight.value, 10);
+      this.updatePickerUIFromHsl(true);
+    };
+
+    this.dom.pickerHue.addEventListener('input', onSliderInput);
+    this.dom.pickerSat.addEventListener('input', onSliderInput);
+    this.dom.pickerLight.addEventListener('input', onSliderInput);
+
+    // Direct Hex text entry
+    this.dom.pickerHexInput.addEventListener('input', (e) => {
+      const cleanHex = e.target.value.replace(/[^0-9A-Fa-f]/g, '');
+      if (cleanHex.length === 6) {
+        this.syncPickerToHex('#' + cleanHex);
+        this.updatePickerUIFromHsl(true);
+      }
+    });
+
+    // Native Color Input
+    this.dom.nativeColorInput.addEventListener('input', (e) => {
+      this.syncPickerToHex(e.target.value);
+      this.updatePickerUIFromHsl(true);
+    });
+
+    // Eyedropper API
+    if (window.EyeDropper) {
+      this.dom.btnEyedropper.addEventListener('click', async () => {
+        try {
+          const eyeDropper = new window.EyeDropper();
+          const result = await eyeDropper.open();
+          if (result && result.sRGBHex) {
+            this.syncPickerToHex(result.sRGBHex);
+            this.updatePickerUIFromHsl(true);
+          }
+        } catch (err) {}
+      });
+    } else {
+      this.dom.btnEyedropper.style.opacity = '0.35';
+      this.dom.btnEyedropper.title = 'Eyedropper not supported in this browser';
+    }
+
+    // Apply Tint Button
+    this.dom.btnApplyColor.addEventListener('click', () => {
+      const hex = this.hslToHex(this.pickerH, this.pickerS, this.pickerL);
+      const halo = computeRothkoHalo(hex);
+      const customPigment = {
+        name: `Custom ${hex.toUpperCase()}`,
+        hex,
+        halo,
+        isCustom: true
+      };
+
+      const exists = this.customPigments.some(p => p.hex.toLowerCase() === hex.toLowerCase());
+      if (!exists) {
+        this.customPigments.unshift(customPigment);
+      }
+
+      this.stagingConfig.pigment = customPigment;
+      this.renderPigmentSwatches();
+      this.onStagingConfigChanged();
+      this.toggleColorPickerPopover(false);
+    });
+  }
+
+  toggleColorPickerPopover(forceOpen) {
+    const popover = this.dom.colorPickerPopover;
+    const isCurrentlyOpen = popover.style.display !== 'none';
+    const shouldOpen = forceOpen !== undefined ? forceOpen : !isCurrentlyOpen;
+
+    if (shouldOpen) {
+      const inspectorRect = this.dom.stagingInspector.getBoundingClientRect();
+      const popoverWidth = 320;
+      const popoverHeight = 310;
+
+      let left = inspectorRect.left + (inspectorRect.width - popoverWidth) / 2;
+      left = Math.max(12, Math.min(window.innerWidth - popoverWidth - 12, left));
+
+      let top = inspectorRect.top - popoverHeight - 14;
+      if (top < 12) {
+        top = inspectorRect.bottom + 14;
+      }
+
+      popover.style.left = `${left}px`;
+      popover.style.top = `${top}px`;
+      popover.style.bottom = 'auto';
+      popover.style.transform = 'none';
+      popover.style.display = 'block';
+
+      this.dom.btnOpenPicker.classList.add('active');
+
+      if (this.stagingConfig.pigment && this.stagingConfig.pigment.hex) {
+        this.syncPickerToHex(this.stagingConfig.pigment.hex);
+        this.updatePickerUIFromHsl(false);
+      }
+    } else {
+      popover.style.display = 'none';
+      this.dom.btnOpenPicker.classList.remove('active');
+    }
+  }
+
+  syncPickerToHex(hex) {
+    const hsl = this.hexToHsl(hex);
+    this.pickerH = hsl.h;
+    this.pickerS = hsl.s;
+    this.pickerL = hsl.l;
+
+    this.dom.pickerHue.value = hsl.h;
+    this.dom.pickerSat.value = hsl.s;
+    this.dom.pickerLight.value = hsl.l;
+  }
+
+  updatePickerUIFromHsl(liveAudition = true) {
+    const hex = this.hslToHex(this.pickerH, this.pickerS, this.pickerL);
+    const halo = computeRothkoHalo(hex);
+
+    this.dom.pickerPreviewCore.style.backgroundColor = hex;
+    this.dom.pickerPreviewHalo.style.backgroundColor = halo;
+    this.dom.pickerPreviewHex.textContent = hex.toUpperCase();
+    this.dom.pickerPreviewHaloHex.textContent = halo.toUpperCase();
+    this.dom.pickerHexInput.value = hex.replace('#', '').toUpperCase();
+    this.dom.nativeColorInput.value = hex;
+
+    const fullHueColor = this.hslToHex(this.pickerH, 100, 50);
+    this.dom.pickerSat.style.background = `linear-gradient(to right, #666, ${fullHueColor})`;
+    this.dom.pickerLight.style.background = `linear-gradient(to right, #000, ${fullHueColor}, #fff)`;
+
+    if (liveAudition && this.currentState === APP_STATE.STAGING) {
+      this.stagingConfig.pigment = {
+        name: `Audition ${hex.toUpperCase()}`,
+        hex,
+        halo,
+        isCustom: true
+      };
+      this.onStagingConfigChanged();
+    }
+  }
+
+  hslToHex(h, s, l) {
+    h /= 360; s /= 100; l /= 100;
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1/6) return p + (q - p) * 6 * t;
+      if (t < 1/2) return q;
+      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      return p;
+    };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    const r = Math.round(hue2rgb(p, q, h + 1/3) * 255);
+    const g = Math.round(hue2rgb(p, q, h) * 255);
+    const b = Math.round(hue2rgb(p, q, h - 1/3) * 255);
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+  }
+
+  hexToHsl(hex) {
+    let c = hex.replace('#', '').trim();
+    if (c.length === 3) c = c.split('').map(x => x + x).join('');
+    const num = parseInt(c, 16);
+    if (isNaN(num)) return { h: 357, s: 84, l: 32 };
+    const r = ((num >> 16) & 255) / 255;
+    const g = ((num >> 8) & 255) / 255;
+    const b = (num & 255) / 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+    if (max === min) {
+      h = s = 0;
+    } else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+      }
+      h /= 6;
+    }
+    return {
+      h: Math.round(h * 360),
+      s: Math.round(s * 100),
+      l: Math.round(l * 100)
+    };
   }
 
   bindEvents() {
