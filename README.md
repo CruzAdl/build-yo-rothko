@@ -19,9 +19,9 @@ Heavy, the canvas is. Unbleached linen. Raw. No undo exists here. Permanent, the
 
 ---
 
-### Deployment to Netlify
+### Deployment to Netlify/Your Wall
 
-No complex apparatus needed. No `node_modules` weighing 400 megabytes in your gym bag. Pure static nectar, this is.
+No complex apparatus needed. No `node_modules` weighing 400 megabytes in your gym bag. Pure static nectar, this is. Just staple it to your wall.
 
 ```bash
 # Push this directory to your Git remote, or drag-and-drop the vibe/ folder directly into app.netlify.com
