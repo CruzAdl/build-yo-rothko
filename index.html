@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>B.Y.O.R. — Build Your Own Rothko</title>
+  <link rel="stylesheet" href="./css/studio.css">
+</head>
+<body>
+
+  <!-- Studio Stage (Blank Linen Canvas) -->
+  <main id="studio-stage">
+    <div id="canvas-viewport-frame">
+      <canvas id="studio-canvas"></canvas>
+
+      <!-- Solvent Wash Scrape Overlay -->
+      <div id="solvent-overlay">
+        <span class="solvent-text">Scraping Canvas</span>
+      </div>
+    </div>
+  </main>
+
+  <!-- Floating UI Overlay -->
+  <aside id="hud-overlay">
+
+    <!-- Draggable/Collapsible Top 6-Dot Cluster -->
+    <header id="top-pill" class="floating-pill">
+      
+      <!-- Drag Grip Icon -->
+      <div class="drag-grip" id="pill-drag-grip" title="Click to hide/show selectors • Drag to reposition">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <circle cx="9" cy="5" r="1.5"></circle>
+          <circle cx="15" cy="5" r="1.5"></circle>
+          <circle cx="9" cy="12" r="1.5"></circle>
+          <circle cx="15" cy="12" r="1.5"></circle>
+          <circle cx="9" cy="19" r="1.5"></circle>
+          <circle cx="15" cy="19" r="1.5"></circle>
+        </svg>
+      </div>
+
+      <!-- GROUND SETUP CONTROLS (Multi-Tier Staggered Heights) -->
+      <div id="ground-setup-controls" class="cluster-stack">
+        <!-- Tier 1: Format -->
+        <div class="cluster-tier">
+          <span class="pill-label">Format</span>
+          <div class="item-group" id="proportion-buttons"></div>
+        </div>
+
+        <!-- Tier 2: Base Canvas -->
+        <div class="cluster-tier">
+          <span class="pill-label">Base Canvas</span>
+          <div class="item-group" id="ground-swatches"></div>
+        </div>
+      </div>
+
+      <!-- STATUS BAR (Locked on Escape or once shapes are placed) -->
+      <div id="studio-status-bar">
+        <div class="status-metric">Shapes: <span id="baked-count-display">0</span></div>
+        <div class="pill-divider"></div>
+        <button id="btn-remove-last-shape" class="btn-secondary" title="Remove uncommitted shape from canvas (- / Backspace)">Remove Last Shape</button>
+        <button id="btn-scrape-canvas" class="btn-secondary">Restart Painting</button>
+        <button id="btn-work-is-done" class="btn-action-primary">Work is Done</button>
+      </div>
+
+    </header>
+
+    <!-- Bottom Floating Dock -->
+    <footer id="bottom-dock">
+      
+      <!-- Primary Idle Button: + Add Shape -->
+      <button id="btn-open-staging">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Add Shape
+      </button>
+
+      <!-- Secondary Staging Inspector with 6-Dot Collapse/Toggle Button -->
+      <div id="staging-inspector" class="floating-dock">
+        
+        <!-- 6-Dot Grip Toggle for Secondary Staging Inspector -->
+        <div class="drag-grip" id="staging-drag-grip" title="Click or hit Esc to hide/show selectors">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <circle cx="9" cy="5" r="1.5"></circle>
+            <circle cx="15" cy="5" r="1.5"></circle>
+            <circle cx="9" cy="12" r="1.5"></circle>
+            <circle cx="15" cy="12" r="1.5"></circle>
+            <circle cx="9" cy="19" r="1.5"></circle>
+            <circle cx="15" cy="19" r="1.5"></circle>
+          </svg>
+        </div>
+
+        <div id="staging-content-wrapper">
+          <!-- Shape -->
+          <div class="staging-row">
+            <span class="row-label">Shape</span>
+            <div class="item-group" id="shape-strip"></div>
+          </div>
+
+          <!-- Colour -->
+          <div class="staging-row">
+            <span class="row-label">Colour</span>
+            <div class="item-group" id="pigment-strip"></div>
+          </div>
+
+          <!-- Texture -->
+          <div class="staging-row">
+            <span class="row-label">Texture</span>
+            <div class="item-group" id="texture-strip"></div>
+          </div>
+
+          <!-- Edge & Bleed -->
+          <div class="staging-row">
+            <span class="row-label">Edge</span>
+            <div class="item-group" id="edge-strip"></div>
+            <div class="slider-group" style="margin-left: 12px;">
+              <span class="row-label" style="width: auto;">Bleed:</span>
+              <input type="range" id="slider-bleed" min="0" max="100" value="50">
+            </div>
+          </div>
+
+          <!-- Action Row -->
+          <div class="staging-actions">
+            <button id="btn-bake-shape" class="btn-place">Place Shape (Enter)</button>
+          </div>
+        </div>
+
+      </div>
+
+    </footer>
+
+  </aside>
+
+  <!-- Gallery Light Room View -->
+  <section id="gallery-room">
+    <div id="gallery-spotlight-field"></div>
+    <div id="gallery-floor"></div>
+
+    <div id="gallery-installation-stage">
+      <div id="gallery-wall-frame">
+        <canvas id="gallery-canvas"></canvas>
+
+        <!-- Museum Provenance Plaque -->
+        <article id="museum-plaque">
+          <h2 class="plaque-artist">Mark Rothko</h2>
+          <div class="plaque-title" contenteditable="true" spellcheck="false">Untitled</div>
+          <p class="plaque-meta">1960<br>Oil on canvas</p>
+          <p class="plaque-provenance" id="plaque-provenance-text">First state — executed without prior scraped studies</p>
+        </article>
+      </div>
+    </div>
+
+    <!-- Gallery Light Room HUD -->
+    <nav id="gallery-hud" class="floating-dock">
+      <div class="hud-group">
+        <label for="wall-select">Wall</label>
+        <select id="wall-select" class="hud-select"></select>
+      </div>
+
+      <div class="pill-divider"></div>
+
+      <div class="hud-group">
+        <label for="slider-light-int">Brightness</label>
+        <input type="range" id="slider-light-int" min="20" max="100" value="65">
+      </div>
+
+      <div class="hud-group">
+        <label for="slider-light-kelvin">Warmth</label>
+        <input type="range" id="slider-light-kelvin" min="2400" max="5500" step="50" value="3200">
+      </div>
+
+      <div class="pill-divider"></div>
+
+      <button id="btn-take-photo" class="btn-photo">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+          <circle cx="12" cy="13" r="4"></circle>
+        </svg>
+        Take Picture
+      </button>
+
+      <button id="btn-return-studio" class="btn-return-studio">Return to Studio</button>
+    </nav>
+  </section>
+
+  <!-- Shutter Flash -->
+  <div id="shutter-flash"></div>
+
+  <!-- Entry Script -->
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
