@@ -141,12 +141,20 @@
       <div id="gallery-wall-frame">
         <canvas id="gallery-canvas"></canvas>
 
-        <!-- Museum Provenance Plaque -->
-        <article id="museum-plaque">
-          <h2 class="plaque-artist">Mark Rothko</h2>
-          <div class="plaque-title" contenteditable="true" spellcheck="false">Untitled</div>
-          <p class="plaque-meta">1960<br>Oil on canvas</p>
-          <p class="plaque-provenance" id="plaque-provenance-text">First state — executed without prior scraped studies</p>
+        <!-- Museum Gallery Plaque: Tiny realistic scale, expands on click to readable size, collapses on re-click -->
+        <article id="museum-plaque" title="Click to expand / collapse label">
+          <div class="plaque-header-row">
+            <span class="plaque-artist" contenteditable="true" spellcheck="false" title="Click to edit Name">Name</span>
+          </div>
+
+          <div class="plaque-line">
+            <span class="plaque-title" contenteditable="true" spellcheck="false" title="Click to edit title">Untitled</span>,
+            <span class="plaque-year immutable-text">2026</span>
+          </div>
+
+          <p class="plaque-medium immutable-text">Oil on Canvas</p>
+
+          <p class="plaque-provenance" id="plaque-provenance-text" contenteditable="true" spellcheck="false" title="Click to edit provenance state / number of tries">First state — executed without prior scraped studies</p>
         </article>
       </div>
     </div>

@@ -1,0 +1,18 @@
+# OS and workspace artifacts
+.DS_Store
+Thumbs.db
+.Rhistory
+.Rdata
+
+# Scratch files and persona codices
+THE_GRIDWEAVER.md
+AGENTS.md
+GEMINI.md
+byor.html
+LICENSE
+
+# Node / Bundler artifacts (if run locally)
+node_modules/
+package-lock.json
+dist/
+.vite/

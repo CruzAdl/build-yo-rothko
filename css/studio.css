@@ -631,49 +631,122 @@ html, body {
   display: block;
 }
 
+/* Museum Provenance Plaque: Ultra-compact by default, toggles readable size on click */
 #museum-plaque {
   position: absolute;
-  bottom: 24px;
-  right: -240px;
-  width: 210px;
-  background: rgba(220, 214, 206, 0.95);
-  color: #181514;
-  padding: 14px 16px;
+  bottom: 8px;
+  right: -92px;
+  width: 76px;
+  background: rgba(226, 220, 212, 0.96);
+  color: #1a1615;
+  padding: 4px 6px;
   border-radius: 2px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(0, 0, 0, 0.15);
   font-family: var(--font-serif);
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: bottom left;
+  z-index: 20;
+}
+
+#museum-plaque.is-expanded {
+  width: 250px;
+  padding: 14px 18px;
+  right: -270px;
+  bottom: 16px;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(0, 0, 0, 0.2);
+}
+
+.plaque-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1px;
 }
 
 .plaque-artist {
-  font-size: 0.85rem;
+  font-size: 0.48rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin-bottom: 2px;
-}
-
-.plaque-title {
-  font-size: 0.78rem;
-  font-style: italic;
-  color: #3b3330;
   outline: none;
   cursor: text;
 }
 
-.plaque-meta {
-  font-size: 0.66rem;
+#museum-plaque.is-expanded .plaque-artist {
+  font-size: 0.88rem;
+}
+
+.plaque-line {
+  font-size: 0.42rem;
+  margin-top: 1px;
+  color: #2b2422;
+}
+
+#museum-plaque.is-expanded .plaque-line {
+  font-size: 0.78rem;
+  margin-top: 4px;
+}
+
+.plaque-title {
+  font-size: inherit;
+  font-style: italic;
+  color: #1a1615;
+  outline: none;
+  cursor: text;
+}
+
+.plaque-year {
+  font-size: inherit;
+  font-style: normal;
+  color: #3b322f;
+}
+
+/* Immutable Text Guarantee */
+.immutable-text {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  pointer-events: none !important;
+}
+
+.plaque-medium {
+  font-size: 0.38rem;
   font-family: var(--font-sans);
   color: #6a605c;
-  margin-top: 8px;
+  margin-top: 2px;
+}
+
+#museum-plaque.is-expanded .plaque-medium {
+  font-size: 0.68rem;
+  margin-top: 6px;
 }
 
 .plaque-provenance {
-  font-size: 0.65rem;
+  font-size: 0.36rem;
   font-family: monospace;
   color: #8c3b28;
+  margin-top: 3px;
+  padding-top: 2px;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  outline: none;
+  cursor: text;
+  line-height: 1.25;
+}
+
+#museum-plaque.is-expanded .plaque-provenance {
+  font-size: 0.66rem;
   margin-top: 8px;
   padding-top: 6px;
-  border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+[contenteditable="true"]:hover {
+  outline: 1px dashed rgba(0, 0, 0, 0.25);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+[contenteditable="true"]:focus {
+  outline: 1px solid #bf4324;
+  background: #ffffff;
 }
 
 #gallery-hud {

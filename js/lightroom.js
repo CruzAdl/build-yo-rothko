@@ -1,5 +1,5 @@
 /**
- * lightroom.js - Clean Architectural Gallery Light Room
+ * lightroom.js - Clean Architectural Gallery Light Room with Ultra-Compact Toggle Plaque
  */
 
 import { WALL_ARCHITECTURES } from './palette.js';
@@ -31,10 +31,32 @@ export class GalleryLightRoom {
     this.domRoom = document.getElementById('gallery-room');
     this.domWallFrame = document.getElementById('gallery-wall-frame');
     this.domShutter = document.getElementById('shutter-flash');
+    this.domPlaque = document.getElementById('museum-plaque');
 
     this.onPointerDown = this.handlePointerDown.bind(this);
     this.onPointerMove = this.handlePointerMove.bind(this);
     this.onPointerUp = this.handlePointerUp.bind(this);
+
+    this.initPlaqueToggleBehavior();
+  }
+
+  initPlaqueToggleBehavior() {
+    if (!this.domPlaque) return;
+
+    this.domPlaque.addEventListener('click', (e) => {
+      // If user is actively typing in a contenteditable field, don't collapse on their keystrokes/selection clicks
+      if (e.target.isContentEditable && this.domPlaque.classList.contains('is-expanded')) {
+        return;
+      }
+      this.domPlaque.classList.toggle('is-expanded');
+    });
+
+    // Clicking anywhere on the gallery wall outside collapses the plaque back to small size
+    document.addEventListener('click', (e) => {
+      if (this.domPlaque && !this.domPlaque.contains(e.target) && !e.target.closest('#gallery-hud')) {
+        this.domPlaque.classList.remove('is-expanded');
+      }
+    });
   }
 
   enter(colorBuffer, heightBuffer, provenanceData) {
@@ -63,6 +85,7 @@ export class GalleryLightRoom {
     window.removeEventListener('pointermove', this.onPointerMove);
     window.removeEventListener('pointerup', this.onPointerUp);
     this.isDraggingSpotlight = false;
+    if (this.domPlaque) this.domPlaque.classList.remove('is-expanded');
   }
 
   setWallArchitecture(wall) {
@@ -286,42 +309,62 @@ export class GalleryLightRoom {
     // Painting canvas
     expCtx.drawImage(this.litCanvas, paintingX, paintingY, paintingW, paintingH);
 
-    // 5. Plaque
-    const plaqueW = 230;
-    const plaqueH = 130;
-    const plaqueX = Math.min(expW - plaqueW - 40, paintingX + paintingW + 40);
-    const plaqueY = paintingY + paintingH - plaqueH - 10;
+    // 5. Proportionally scaled Museum Plaque
+    const plaqueW = 150;
+    const plaqueH = 80;
+    const plaqueX = Math.min(expW - plaqueW - 40, paintingX + paintingW + 28);
+    const plaqueY = paintingY + paintingH - plaqueH - 6;
 
     expCtx.save();
-    expCtx.shadowColor = 'rgba(0,0,0,0.5)';
-    expCtx.shadowBlur = 20;
+    expCtx.shadowColor = 'rgba(0,0,0,0.55)';
+    expCtx.shadowBlur = 16;
     expCtx.shadowOffsetY = 6;
-    expCtx.fillStyle = '#dcd6ce';
+    expCtx.fillStyle = '#e2dcd4';
     expCtx.fillRect(plaqueX, plaqueY, plaqueW, plaqueH);
     expCtx.restore();
 
+    // Read current user-edited text from DOM
+    const artistElem = document.querySelector('.plaque-artist');
+    const artistText = artistElem ? artistElem.textContent.trim() : 'Name';
+
     const titleElem = document.querySelector('.plaque-title');
-    const titleText = titleElem ? titleElem.textContent : 'Untitled';
-    const provText = this.provenance.destroyedCount === 0
-      ? 'First state — executed without prior scraped studies'
-      : `Final state following ${this.provenance.destroyedCount} destroyed ${this.provenance.destroyedCount === 1 ? 'study' : 'studies'}`;
+    const titleText = titleElem ? titleElem.textContent.trim() : 'Untitled';
 
-    expCtx.fillStyle = '#181514';
-    expCtx.font = 'bold 15px Georgia, serif';
-    expCtx.fillText('MARK ROTHKO', plaqueX + 16, plaqueY + 28);
+    const provElem = document.getElementById('plaque-provenance-text');
+    const provText = provElem ? provElem.textContent.trim() : 'First state — executed without prior scraped studies';
 
-    expCtx.font = 'italic 13px Georgia, serif';
-    expCtx.fillStyle = '#3b3330';
-    expCtx.fillText(titleText, plaqueX + 16, plaqueY + 50);
+    // Draw typography onto export
+    expCtx.fillStyle = '#1a1615';
+    expCtx.font = 'bold 11px Georgia, serif';
+    expCtx.fillText(artistText, plaqueX + 10, plaqueY + 18);
 
-    expCtx.font = '11px sans-serif';
+    expCtx.font = 'italic 9.5px Georgia, serif';
+    expCtx.fillStyle = '#1a1615';
+    expCtx.fillText(`${titleText}, `, plaqueX + 10, plaqueY + 34);
+
+    const titleWidth = expCtx.measureText(`${titleText}, `).width;
+    expCtx.font = '9.5px Georgia, serif';
+    expCtx.fillStyle = '#3b322f';
+    expCtx.fillText('2026', plaqueX + 10 + titleWidth, plaqueY + 34);
+
+    expCtx.font = '8px sans-serif';
     expCtx.fillStyle = '#6a605c';
-    expCtx.fillText('1960', plaqueX + 16, plaqueY + 74);
-    expCtx.fillText('Oil on canvas', plaqueX + 16, plaqueY + 90);
+    expCtx.fillText('Oil on Canvas', plaqueX + 10, plaqueY + 48);
 
-    expCtx.font = '10px monospace';
+    expCtx.font = '7.5px monospace';
     expCtx.fillStyle = '#8c3b28';
-    expCtx.fillText(provText, plaqueX + 16, plaqueY + 114);
+    
+    // Wrap provenance line if needed
+    if (expCtx.measureText(provText).width > plaqueW - 20) {
+      const words = provText.split(' ');
+      const mid = Math.ceil(words.length / 2);
+      const line1 = words.slice(0, mid).join(' ');
+      const line2 = words.slice(mid).join(' ');
+      expCtx.fillText(line1, plaqueX + 10, plaqueY + 63);
+      expCtx.fillText(line2, plaqueX + 10, plaqueY + 73);
+    } else {
+      expCtx.fillText(provText, plaqueX + 10, plaqueY + 66);
+    }
 
     // Download
     const link = document.createElement('a');
